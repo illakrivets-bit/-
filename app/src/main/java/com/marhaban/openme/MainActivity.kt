@@ -35,6 +35,7 @@ class MainActivity : Activity() {
     private lateinit var soundValue: TextView
 
     private val handler = Handler(Looper.getMainLooper())
+    private val audioHandler = Handler(Looper.getMainLooper())
     private var running = false
     private var soundEnabled = true
     private var soundLevelValue = 22
@@ -138,7 +139,8 @@ class MainActivity : Activity() {
                 override fun onProgressChanged(seekBar: SeekBar?, value: Int, fromUser: Boolean) {
                     soundLevelValue = value
                     soundValue.text = "مستوى المؤثرات: $value٪"
-                    tone?.stopTone()
+                    tone?.release()
+                    tone = null
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -237,19 +239,27 @@ class MainActivity : Activity() {
         if (!soundEnabled || soundLevelValue == 0) return
         try {
             if (tone == null) tone = ToneGenerator(AudioManager.STREAM_MUSIC, soundLevelValue)
+            audioHandler.removeCallbacksAndMessages(null)
             tone?.stopTone()
-            val toneType = when (kind) {
-                1 -> ToneGenerator.TONE_PROP_BEEP
-                2 -> ToneGenerator.TONE_PROP_NACK
-                else -> ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD
+            val pattern = when (kind) {
+                1 -> listOf(ToneGenerator.TONE_PROP_BEEP, ToneGenerator.TONE_DTMF_2)
+                2 -> listOf(ToneGenerator.TONE_PROP_NACK, ToneGenerator.TONE_PROP_NACK)
+                else -> listOf(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, ToneGenerator.TONE_DTMF_0, ToneGenerator.TONE_PROP_BEEP)
             }
-            tone?.startTone(toneType, if (kind == 3) 260 else 150)
+            pattern.forEachIndexed { index, toneType ->
+                audioHandler.postDelayed({
+                    if (soundEnabled && soundLevelValue > 0) {
+                        tone?.startTone(toneType, 115)
+                    }
+                }, index * 190L)
+            }
         } catch (_: Exception) { }
     }
 
     private fun stopSimulation() {
         running = false
         handler.removeCallbacksAndMessages(null)
+        audioHandler.removeCallbacksAndMessages(null)
         tone?.stopTone()
         root.setBackgroundColor(Color.rgb(23, 25, 24))
         reaper.visibility = View.GONE
@@ -267,6 +277,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        audioHandler.removeCallbacksAndMessages(null)
         tone?.release()
         tone = null
         super.onDestroy()
@@ -319,6 +330,6 @@ private class ReaperView(context: android.content.Context) : View(context) {
         paint.color = Color.argb(110, 255, 255, 255)
         paint.textSize = h * .07f
         paint.typeface = Typeface.MONOSPACE
-        canvas.drawText("0x00  //  UNKNOWN", w * .05f, h * .94f, paint)
+        canvas.drawText("رمز مجهول  //  ٠٠", w * .05f, h * .94f, paint)
     }
 }
