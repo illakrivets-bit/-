@@ -187,8 +187,11 @@ class MainActivity : Activity() {
 
     private fun scheduleNext() {
         handler.removeCallbacksAndMessages(null)
-        if (running && step < scenes.size - 1) {
+        if (!running) return
+        if (step < scenes.size - 1) {
             handler.postDelayed({ showNextScene() }, 4200)
+        } else {
+            handler.postDelayed({ finishSequence() }, 4200)
         }
     }
 
