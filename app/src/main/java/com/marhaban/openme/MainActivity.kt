@@ -30,7 +30,6 @@ class MainActivity : Activity() {
     private lateinit var reaper: ReaperView
     private lateinit var soundButton: Button
     private lateinit var startButton: Button
-    private lateinit var nextButton: Button
     private lateinit var soundLevel: SeekBar
     private lateinit var soundValue: TextView
 
@@ -52,15 +51,21 @@ class MainActivity : Activity() {
         val sound: Int = 0
     )
 
+    // Twelve chapters: 12 x 20 seconds = four minutes.
+    // The immediate stop control stays available throughout.
     private val scenes = listOf(
-        Scene("جارٍ فتح الملف", "مرحباً...\nلم يتم العثور على وصف لهذا البرنامج.", sound = 1),
-        Scene("فحص غير مكتمل", "الاسم غير مسجل في قاعدة البيانات.\nالمصدر: غير معروف.", sound = 0),
-        Scene("تحذير", "هناك شيء غير طبيعي هنا.", red = true, sound = 2),
-        Scene("اتصال غير معروف", "لا تغلق النافذة الآن.", sound = 1),
-        Scene("خطأ في النظام", "تعذر قراءة البيانات.\nرمز الخطأ: 0x0000A17", red = true, reaper = true, sound = 3),
-        Scene("تم العثور على سجل", "لماذا عدت إلى هنا؟", sound = 0),
-        Scene("فشل الاتصال", "انتهت الجلسة... أم أنها لم تبدأ؟", red = true, sound = 2),
-        Scene("اكتملت العملية", "لم يتم إجراء أي تغيير على الهاتف.", sound = 1)
+        Scene("جارٍ فتح الملف", "مرحباً...\\nهل تسمعني؟", sound = 1),
+        Scene("فحص غير مكتمل", "هذا الملف لا يحمل اسماً.\\nلكنني أعرف أنك فتحته.", sound = 0),
+        Scene("تحذير", "لا تبحث عن مصدر الرسالة.\\nالمصدر أمامك الآن.", red = true, sound = 2),
+        Scene("اتصال غير معروف", "كنت أنتظر هذه اللحظة منذ وقت طويل.", sound = 1),
+        Scene("خطأ في النظام", "تم العثور على وجه داخل السجل.\\nالهوية: غير معروفة.", red = true, reaper = true, sound = 3),
+        Scene("رسالة واردة", "لا تنظر خلفك...\\nأنا مجرد صورة على الشاشة.", sound = 0),
+        Scene("ملف صوتي تالف", "واحد... اثنان... ثلاثة...\\nهل ما زلت تقرأ؟", red = true, sound = 2),
+        Scene("تم رصد حركة", "اقتربت الصورة قليلاً.\\nلا يوجد شيء على هاتفك.", reaper = true, sound = 1),
+        Scene("سجل قديم", "2015/07/14 — تم فتح الجلسة مرة أخرى.", sound = 0),
+        Scene("خطأ 0x0000A17", "تعذر تحميل الذاكرة الوهمية.\\nجارٍ إعادة بناء المشهد.", red = true, sound = 3),
+        Scene("الرسالة الأخيرة", "كنت أريد فقط أن تتذكر اسمي...\\nمرحباً أيها المستخدم.", reaper = true, sound = 2),
+        Scene("انتهت المحاكاة", "انتهت الدقائق الأربع.\\nلم يتم قفل الهاتف أو تغيير ملفاته.", red = true, sound = 1)
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,7 +99,7 @@ class MainActivity : Activity() {
         header = makeText("مرحباً أيها المستخدم، افتحني", 19f, Color.rgb(230, 232, 229))
         root.addView(header)
 
-        root.addView(makeText("الإصدار 0.8.13  •  2015  •  ملف غير معروف", 10f, Color.rgb(125, 137, 129))
+        root.addView(makeText("الإصدار 0.9.0  •  2015  •  ملف غير معروف", 10f, Color.rgb(125, 137, 129))
             .apply { setPadding(0, dp(5), 0, dp(18)) })
 
         status = makeText("في انتظار التشغيل", 15f, Color.rgb(191, 199, 192))
@@ -151,13 +156,9 @@ class MainActivity : Activity() {
         startButton = makeButton("بدء التجربة") { startSimulation() }
         root.addView(startButton)
 
-        nextButton = makeButton("المشهد التالي") { showNextScene() }
-        nextButton.isEnabled = false
-        root.addView(nextButton)
-
         root.addView(makeButton("إيقاف فوري / خروج") { stopSimulation() })
 
-        root.addView(makeText("محاكاة آمنة • لا تغييرات على الهاتف", 9f, Color.rgb(105, 116, 108))
+        root.addView(makeText("١٢ فصلاً • ٤ دقائق • إيقاف فوري متاح", 9f, Color.rgb(105, 116, 108))
             .apply { setPadding(0, dp(9), 0, 0) })
 
         setContentView(root)
@@ -179,7 +180,6 @@ class MainActivity : Activity() {
         step = 0
         logLines.clear()
         startButton.isEnabled = false
-        nextButton.isEnabled = true
         appendLog("بدأت الجلسة")
         showScene(scenes[step])
         scheduleNext()
@@ -189,9 +189,9 @@ class MainActivity : Activity() {
         handler.removeCallbacksAndMessages(null)
         if (!running) return
         if (step < scenes.size - 1) {
-            handler.postDelayed({ showNextScene() }, 4200)
+            handler.postDelayed({ showNextScene() }, 20_000)
         } else {
-            handler.postDelayed({ finishSequence() }, 4200)
+            handler.postDelayed({ finishSequence() }, 20_000)
         }
     }
 
@@ -229,12 +229,11 @@ class MainActivity : Activity() {
     private fun finishSequence() {
         running = false
         handler.removeCallbacksAndMessages(null)
-        nextButton.isEnabled = false
         startButton.isEnabled = true
         root.setBackgroundColor(Color.rgb(23, 25, 24))
         reaper.visibility = View.GONE
         status.text = "انتهت الجلسة"
-        message.text = "لم يتم إجراء أي تغيير على الهاتف."
+        message.text = "اكتملت المحاكاة خلال أربع دقائق. لم يتم قفل الهاتف أو إيقافه."
         appendLog("أغلقت الجلسة بأمان")
     }
 
@@ -268,7 +267,6 @@ class MainActivity : Activity() {
         reaper.visibility = View.GONE
         status.text = "تم إيقاف الجلسة"
         message.text = "أغلقت التجربة بأمان."
-        nextButton.isEnabled = false
         startButton.isEnabled = true
         appendLog("أوقف المستخدم التجربة")
     }
