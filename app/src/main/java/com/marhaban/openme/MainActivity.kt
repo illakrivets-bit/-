@@ -105,7 +105,7 @@ class MainActivity : Activity() {
         root.addView(message)
 
         reaper = ReaperView(this).apply { visibility = View.GONE }
-        root.addView(reaper, LinearLayout.LayoutParams(-1, dp(150)))
+        root.addView(reaper, LinearLayout.LayoutParams(-1, dp(105)))
 
         val logHeading = makeText("سجل النشاط", 10f, Color.rgb(133, 145, 136), Gravity.RIGHT)
         logHeading.setPadding(0, dp(8), 0, dp(5))
@@ -117,7 +117,7 @@ class MainActivity : Activity() {
             setBackgroundColor(Color.rgb(31, 35, 32))
             maxLines = 5
         }
-        root.addView(log, LinearLayout.LayoutParams(-1, dp(92)))
+        root.addView(log, LinearLayout.LayoutParams(-1, dp(68)))
 
         val settingsTitle = makeText("إعدادات المؤثرات", 11f, Color.rgb(145, 157, 147), Gravity.RIGHT)
         settingsTitle.setPadding(0, dp(9), 0, dp(3))
